@@ -7584,11 +7584,23 @@ bool GUI_App::window_pos_restore(wxTopLevelWindow* window, const std::string &na
         return false;
     }
 
+    /*unsigned*/int display_idx = wxDisplay::GetFromWindow(window);
+    wxRect display;
+    if (display_idx == wxNOT_FOUND) {
+        display = wxDisplay(0u).GetClientArea();
+        window->Move(display.GetTopLeft());
+    } else {
+        display = wxDisplay(display_idx).GetClientArea();
+    }
+
     auto metrics = WindowMetrics::deserialize(app_config->get(config_key));
+    
     if (! metrics) {
         window->Maximize(default_maximized);
         return true;
     }
+
+    metrics.sanitize_for_display(display);
 
     const wxRect& rect = metrics->get_rect();
     window->SetPosition(rect.GetPosition());
